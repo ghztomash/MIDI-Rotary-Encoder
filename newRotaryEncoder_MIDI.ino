@@ -1,4 +1,8 @@
-#include "ledRings.h"
+//teensy++ code for rotary encoder controller
+//tomash ghz
+//www.tomashg.com
+
+#include "ledRings.h" // library for LED rings from http://code.google.com/p/ledrings/
 #include <Encoder.h>
 #include <Bounce.h>
 
@@ -32,7 +36,7 @@ int knobShift[4]={0,0,0,0};
 int ledValues[8];
 
 int buttons[4]={6,15,22,21};
-Bounce buttonState[4];
+Bounce *buttonState[4];
 
 //values for the encoder leds
 unsigned int sequence[3][16] = {
@@ -57,7 +61,7 @@ void setup() {
   //set button pins to input
   for(int i=0;i<4;i++){
     pinMode(buttons[i], INPUT_PULLUP);
-    buttonState[i]=Bounce(buttons[i],10);
+    *buttonState[i]=Bounce(buttons[i],10);
   }
   //digitalWrite(6, LOW);
   pinMode(6, OUTPUT);
@@ -88,9 +92,9 @@ void loop(){
   }
   
     //read buttons
-    if(buttonState[i].update()){//state changed
+    if(buttonState[i]->update()){//state changed
       
-      if(buttonState[i].read()==LOW){//is pressed
+      if(buttonState[i]->read()==LOW){//is pressed
 
       }else{ // was released
         ring.blinkRing(i,2,40);
