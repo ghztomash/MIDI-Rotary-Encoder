@@ -33,7 +33,7 @@ Encoder knob3(18, 23);
 Encoder knob4(19, 20);
 
 int knobShift[4]={0,0,0,0};
-int ledValues[8];
+float ledValues[8];
 
 int buttons[4]={6,15,22,21};
 Bounce *buttonState[4];
@@ -61,7 +61,7 @@ void setup() {
   //set button pins to input
   for(int i=0;i<4;i++){
     pinMode(buttons[i], INPUT_PULLUP);
-    buttonState[i]= new Bounce(buttons[i],10);
+    buttonState[i]=new Bounce(buttons[i],10);
   }
   //digitalWrite(6, LOW);
   pinMode(6, OUTPUT);
@@ -130,8 +130,6 @@ void loop(){
   //update the led displays
   printLeds();
   
-  
-  
 }
 
 void ledInitialize(){
@@ -153,7 +151,8 @@ void printLeds(){
   ring.allRingsOff();
   
   for (int i=0;i<4;i++){
-    ring.setRingState(i, sequence[1][ledValues[i*2+knobShift[i]]]);
+    int pos=ledValues[i*2+knobShift[i]];
+    ring.setRingState(i, sequence[1][pos]);
     
     if(knobShift[i]==1)
       ring.setRingBottomLed(i,HIGH);
@@ -170,6 +169,7 @@ void midiCC(int n, int v){
     }else{
       usbMIDI.sendControlChange(v*2+knobShift[v], 65, midiChannel);
     }
+    ledValues[v*2+knobShift[v]]+=0.1;
   }else{
     if(debugging){
       //Serial.print(v*2+knobShift[v]);
@@ -177,7 +177,10 @@ void midiCC(int n, int v){
     }else{
       usbMIDI.sendControlChange(v*2+knobShift[v], 63, midiChannel);
     }
+    ledValues[v*2+knobShift[v]]-=0.1;
   }
+  //make sure its in range
+  ledValues[v*2+knobShift[v]]=constrain(ledValues[v*2+knobShift[v]],0,15);
 }
 
 void myCC(byte channel,byte  number,byte value){
