@@ -22,6 +22,7 @@
 
 //debugging will print out in serial instead of midi
 boolean debugging=false;
+boolean ableton=true; // if enabled updates the LED values internaly since ableton doesnt do that in real time
 
 //channel number for midi messages
 int midiChannel=5;
@@ -67,6 +68,7 @@ void setup() {
   pinMode(6, OUTPUT);
   //play led animation
   ledInitialize();
+  
 }
 
 void loop(){
@@ -133,11 +135,18 @@ void loop(){
 }
 
 void ledInitialize(){
-  
+// initial led animation  
   ring.allRingsOff();
   
   for(int i=0;i<4;i++){
     for (byte j=0;j<ring.num_leds_arc;j++){
+      ring.setRingLed(i, j, HIGH);
+      delay(25);
+      //ring.allRingsOff();
+    }
+  }
+  for(int i=3;i>0;i--){
+    for (byte j=ring.num_leds_arc-1;j>0;j--){
       ring.setRingLed(i, j, HIGH);
       delay(25);
       ring.allRingsOff();
@@ -147,7 +156,7 @@ void ledInitialize(){
 }
 
 void printLeds(){
-  
+//update the LED rings  
   ring.allRingsOff();
   
   for (int i=0;i<4;i++){
@@ -161,30 +170,38 @@ void printLeds(){
 
 void midiCC(int n, int v){
   //send a midi cc message
-  if(n==0){
+  if(n==0){ //turns right
   
     if(debugging){
       //Serial.print(v*2+knobShift[v]);
       //Serial.println(" >>");
     }else{
-      usbMIDI.sendControlChange(v*2+knobShift[v], 65, midiChannel);
+      if (ableton){
+      usbMIDI.sendControlChange(v*2+knobShift[v], 68, midiChannel); //normaly 65 for traktor, 68 for ableton to have less resolution
+      ledValues[v*2+knobShift[v]]+=0.212;
+      }
+      else
+        usbMIDI.sendControlChange(v*2+knobShift[v], 65, midiChannel);
     }
-    ledValues[v*2+knobShift[v]]+=0.1;
-  }else{
+  }else{ //turns left
     if(debugging){
       //Serial.print(v*2+knobShift[v]);
       //Serial.println(" <<");
     }else{
-      usbMIDI.sendControlChange(v*2+knobShift[v], 63, midiChannel);
-    }
-    ledValues[v*2+knobShift[v]]-=0.1;
+      if (ableton){
+        usbMIDI.sendControlChange(v*2+knobShift[v], 60, midiChannel); //normaly 63 for traktor, 60 for ableton to have less resolution
+        ledValues[v*2+knobShift[v]]-=0.212; //update the leds
+      }
+      else
+        usbMIDI.sendControlChange(v*2+knobShift[v], 63, midiChannel);
+    }   
   }
   //make sure its in range
   ledValues[v*2+knobShift[v]]=constrain(ledValues[v*2+knobShift[v]],0,15);
 }
 
 void myCC(byte channel,byte  number,byte value){
-  
+//event handler for incoming cc messages  
   if(channel==midiChannel){
     if ((number>=0)&&(number<=7)){
       ledValues[number%8]=map(value,0,127,0,15);
