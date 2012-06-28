@@ -61,7 +61,7 @@ void setup() {
   //set button pins to input
   for(int i=0;i<4;i++){
     pinMode(buttons[i], INPUT_PULLUP);
-    *buttonState[i]=Bounce(buttons[i],10);
+    buttonState[i]= new Bounce(buttons[i],10);
   }
   //digitalWrite(6, LOW);
   pinMode(6, OUTPUT);
